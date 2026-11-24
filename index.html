@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Escape Room: Probability Mystery</title>
+  <link rel="stylesheet" href="tampilan.css" />
+</head>
+<body>
+  <!-- Kanvas 3D Utama -->
+  <div id="canvas-container"></div>
+
+  <!-- Tooltip Nama Benda Saat Kursor Diarahkan -->
+  <div id="tooltip" class="tooltip" style="display: none;"></div>
+
+  <!-- Notifikasi Singkat (Toast) -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ===================================================================== -->
+  <!-- LAYAR MENU UTAMA (START SCREEN)                                       -->
+  <!-- ===================================================================== -->
+  <div id="start-screen" class="overlay-screen">
+    <div class="menu-card">
+      <h1>Math Escape Room</h1>
+      <p class="subtitle">Probability Mystery</p>
+      <p class="menu-desc">
+        Kamu terjebak dalam rumah tua misterius. Jelajahi setiap ruangan, periksa benda-benda aneh di sekitarmu, temukan <strong>tiga kunci</strong> tersembunyi, dan pecahkan teka-teki peluang dalam bentuk <strong>pecahan paling sederhana</strong> sebelum waktu habis!
+      </p>
+
+      <div class="menu-buttons">
+        <!-- Baris Atas: Kiri Rumus, Kanan Panduan -->
+        <div class="menu-row-split">
+          <button id="btn-formula" class="btn-secondary btn-formula-trigger" type="button">📐 Rumus</button>
+          <button id="btn-guide" class="btn-secondary btn-guide-trigger" type="button">📖 Panduan</button>
+        </div>
+
+        <!-- Tengah: Mulai Bermain -->
+        <button id="btn-open-name-modal" class="btn-primary" type="button">▶ Mulai Bermain</button>
+
+        <!-- Baris Bawah: Musik (Instrumen) & Suara (Efek SFX) Terpisah -->
+        <div class="menu-row-split">
+          <button id="btn-music" class="btn-secondary btn-music-trigger" type="button">🎵 Musik: Nyala</button>
+          <button id="btn-sfx" class="btn-secondary btn-sfx-trigger" type="button">🔊 Suara: Nyala</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL INPUT NAMA (MUNCUL SETELAH KLIK MULAI BERMAIN)                  -->
+  <!-- ===================================================================== -->
+  <div id="name-modal" class="modal-backdrop hidden">
+    <div class="modal-card name-card">
+      <div class="modal-header">
+        <h2>Masukkan Nama Pemain</h2>
+        <button id="btn-close-name" class="btn-close" type="button" title="Batal">✕</button>
+      </div>
+      <p class="name-desc">Tuliskan namamu terlebih dahulu sebelum memasuki ruangan pertama:</p>
+      <div class="input-group">
+        <input
+          type="text"
+          id="player-name"
+          placeholder="Ketik namamu di sini..."
+          maxlength="24"
+          autocomplete="off"
+        />
+      </div>
+      <div class="modal-footer">
+        <button id="btn-start" class="btn-primary full-width" type="button">Masuk ke Ruangan ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- HUD DALAM PERMAINAN (MUNCUL SAAT BERMAIN)                             -->
+  <!-- ===================================================================== -->
+  <div id="hud" class="hud hidden">
+    <!-- Bar Atas: Info Pemain, Ruangan, Kunci, Timer, & Tombol Kontrol -->
+    <div class="hud-top">
+      <div class="hud-info-group">
+        <div class="hud-pill">
+          <span class="pill-label">Pemain</span>
+          <strong id="hud-player">Pemain</strong>
+        </div>
+        <div class="hud-pill">
+          <span class="pill-label">Ruangan</span>
+          <strong id="hud-level">Level 1: Ruang Kantor Tua</strong>
+        </div>
+      </div>
+
+      <!-- Status 3 Kunci Ruangan -->
+      <div class="hud-keys">
+        <div id="key-slot-A" class="key-slot" title="Kunci A">🔑 A</div>
+        <div id="key-slot-B" class="key-slot" title="Kunci B">🔑 B</div>
+        <div id="key-slot-C" class="key-slot" title="Kunci C">🔑 C</div>
+      </div>
+
+      <!-- Timer 5 Menit per Ruangan & Tombol Rumus/Panduan/Musik/Suara/Menu -->
+      <div class="hud-right-group">
+        <div id="timer-box" class="hud-pill timer-pill">
+          <span class="pill-label">Sisa Waktu</span>
+          <strong id="hud-timer">05:00</strong>
+        </div>
+        <div class="hud-actions">
+          <button id="btn-pause-menu" class="btn-hud" type="button" title="Jeda Permainan / Pilihan Menu">⏸ Menu</button>
+          <button class="btn-hud btn-music-trigger" type="button" title="Nyalakan/Bisukan Musik Latar">🎵 Musik: Nyala</button>
+          <button class="btn-hud btn-sfx-trigger" type="button" title="Nyalakan/Bisukan Efek Suara">🔊 Suara: Nyala</button>
+          <button class="btn-hud btn-formula-trigger" type="button" title="Lihat Rumus Peluang">📐 Rumus</button>
+          <button class="btn-hud btn-guide-trigger" type="button" title="Lihat Panduan Bermain">📖 Panduan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Bawah: Kontrol Fokus Kamera & D-Pad Pergerakan 4 Arah -->
+    <div class="hud-bottom">
+      <div class="camera-shortcuts">
+        <button id="btn-focus-center" class="btn-hud" type="button">👁 Tengah Ruangan</button>
+        <button id="btn-focus-door" class="btn-hud" type="button">🚪 Lihat Pintu</button>
+      </div>
+
+      <!-- D-Pad Layar (Maju, Mundur, Geser Kiri, Geser Kanan) -->
+      <div class="move-pad" aria-label="Kontrol Arah">
+        <button id="btn-move-up" class="btn-move" type="button" title="Maju (W / Panah Atas)">▲</button>
+        <div class="move-pad-middle">
+          <button id="btn-move-left" class="btn-move" type="button" title="Geser Kiri (A / Panah Kiri)">◀</button>
+          <button id="btn-move-down" class="btn-move" type="button" title="Mundur (S / Panah Bawah)">▼</button>
+          <button id="btn-move-right" class="btn-move" type="button" title="Geser Kanan (D / Panah Kanan)">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL PILIHAN DI TENGAH PERMAINAN (LANJUT MAIN / KEMBALI KE MENU)    -->
+  <!-- ===================================================================== -->
+  <div id="pause-modal" class="modal-backdrop hidden">
+    <div class="modal-card center-card pause-card">
+      <div class="badge-mystery">PERMAINAN DIJEDA</div>
+      <h2>Pilih Langkah Selanjutnya</h2>
+      <p>Waktu permainan sedang dijeda. Apakah kamu ingin melanjutkan permainan atau kembali ke menu utama?</p>
+      <div class="pause-actions">
+        <button id="btn-resume-game" class="btn-primary" type="button">▶ Lanjut Main</button>
+        <button id="btn-exit-to-menu" class="btn-secondary" type="button">🏠 Kembali ke Menu Utama</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL SOAL PELUANG (MUNCUL SAAT MENEMUKAN KUNCI DI BENDA)             -->
+  <!-- ===================================================================== -->
+  <div id="puzzle-modal" class="modal-backdrop hidden">
+    <div class="modal-card puzzle-card">
+      <div class="modal-header">
+        <h2 id="puzzle-title">Teka-Teki Kunci</h2>
+        <button id="btn-close-puzzle" class="btn-close" type="button" title="Tutup">✕</button>
+      </div>
+      <p id="puzzle-story" class="puzzle-story"></p>
+
+      <div class="answer-box">
+        <label for="puzzle-answer">Jawaban Pecahan Paling Sederhana:</label>
+        <div class="answer-row">
+          <input
+            type="text"
+            id="puzzle-answer"
+            placeholder="Contoh: 1/2 atau 3/10"
+            autocomplete="off"
+          />
+          <button id="btn-submit-answer" class="btn-primary" type="button">Periksa</button>
+        </div>
+        <small class="format-note">*Wajib dalam bentuk pecahan paling sederhana (a/b). Jawaban desimal ditolak.</small>
+      </div>
+
+      <p id="puzzle-feedback" class="feedback-text"></p>
+
+      <div class="modal-footer">
+        <button id="btn-hint" class="btn-secondary" type="button">💡 Lihat Petunjuk</button>
+        <button class="btn-secondary btn-formula-trigger" type="button">📐 Buka Rumus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL RUMUS PELUANG                                                   -->
+  <!-- ===================================================================== -->
+  <div id="formula-modal" class="modal-backdrop hidden">
+    <div class="modal-card guide-card">
+      <div class="modal-header">
+        <h2>📐 Ringkasan Rumus Peluang</h2>
+        <button id="btn-close-formula" class="btn-close" type="button" title="Tutup">✕</button>
+      </div>
+
+      <div class="guide-content">
+        <div class="formula-grid">
+          <div class="formula-item">
+            <strong>1. Peluang Kejadian Tunggal</strong>
+            <div class="formula-box">P(A) = n(A) / n(S)</div>
+            <small>n(A) = banyak titik sampel kejadian A, n(S) = total seluruh ruang sampel.</small>
+          </div>
+          <div class="formula-item">
+            <strong>2. Peluang Komplemen (Bukan A)</strong>
+            <div class="formula-box">P(A') = 1 − P(A)</div>
+            <small>Peluang tidak terjadinya kejadian A.</small>
+          </div>
+          <div class="formula-item">
+            <strong>3. Kejadian Majemuk Saling Bebas (DAN)</strong>
+            <div class="formula-box">P(A ∩ B) = P(A) × P(B)</div>
+            <small>Digunakan saat melempar dua benda atau mengambil dengan pengembalian.</small>
+          </div>
+          <div class="formula-item">
+            <strong>4. Pengambilan Tanpa Pengembalian</strong>
+            <div class="formula-box">P(A ∩ B) = P(A) × P(B | A)</div>
+            <small>Total benda pada pengambilan kedua berkurang 1 dari total awal.</small>
+          </div>
+          <div class="formula-item">
+            <strong>5. Kombinasi Pengambilan Sekaligus</strong>
+            <div class="formula-box">C(n, r) = n! / [r! × (n − r)!]</div>
+            <small>Digunakan saat mengambil <em>r</em> benda sekaligus dari <em>n</em> benda.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-close-formula-bottom" class="btn-primary" type="button">Tutup Rumus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL PANDUAN BERMAIN                                                 -->
+  <!-- ===================================================================== -->
+  <div id="guide-modal" class="modal-backdrop hidden">
+    <div class="modal-card guide-card">
+      <div class="modal-header">
+        <h2>📖 Panduan Bermain</h2>
+        <button id="btn-close-guide" class="btn-close" type="button" title="Tutup">✕</button>
+      </div>
+
+      <div class="guide-content">
+        <ul>
+          <li><strong>Misi Utama:</strong> Periksa benda-benda aneh di dalam ruangan untuk menemukan <strong>tiga kunci (A, B, dan C)</strong> guna membuka pintu keluar ke ruangan berikutnya.</li>
+          <li><strong>Batas Waktu:</strong> Setiap ruangan memiliki batas waktu <strong>5 menit (05:00)</strong> dan akan diulang kembali saat memasuki ruangan baru.</li>
+          <li><strong>Navigasi Ruangan:</strong> Klik &amp; seret layar untuk menoleh; gunakan tombol <strong>W A S D</strong>, tombol <strong>Panah (▲ ▼ ◀ ▶)</strong>, <strong>D-Pad layar</strong>, atau <strong>geser 2 jari di trackpad / layar HP</strong> untuk maju, mundur, serta geser kiri-kanan.</li>
+          <li><strong>Format Jawaban:</strong> Jawab soal peluang dalam bentuk <strong>pecahan paling sederhana</strong> (contoh: <code>1/2</code>, <code>3/5</code>, <code>7/36</code>). Bentuk desimal akan ditolak.</li>
+        </ul>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-close-guide-bottom" class="btn-primary" type="button">Mengerti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL PINDAH RUANGAN (LEVEL CLEAR)                                    -->
+  <!-- ===================================================================== -->
+  <div id="level-clear-modal" class="modal-backdrop hidden">
+    <div class="modal-card center-card">
+      <div class="badge-mystery">PINTU TERBUKA!</div>
+      <h2 id="level-clear-title">Ruangan Berhasil Dilewati!</h2>
+      <p id="level-clear-desc">Semua kunci terkumpul. Bersiap memasuki ruangan berikutnya...</p>
+      <button id="btn-next-level" class="btn-primary" type="button">Lanjut ke Ruangan Berikutnya ➔</button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL AKHIR PERMAINAN (MENANG / WAKTU HABIS)                          -->
+  <!-- ===================================================================== -->
+  <div id="end-modal" class="modal-backdrop hidden">
+    <div class="modal-card center-card">
+      <h2 id="end-title">SELAMAT!</h2>
+      <p id="end-summary"></p>
+      <button id="btn-restart" class="btn-primary" type="button">🔄 Main Lagi dari Awal</button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PUSTAKA THREE.JS & SKRIP PERMAINAN                                    -->
+  <!-- ===================================================================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="soalpeluang.js"></script>
+  <script src="room3dimensi.js"></script>
+  <script src="logikagame.js"></script>
+</body>
+</html>
